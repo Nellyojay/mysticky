@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getPhoneToken } from './services/getToken'
 import { getLatestMessage, saveMessage } from './services/messages'
 import './styles/sticker-card.css'
 
@@ -19,6 +20,14 @@ function App() {
   const [sentAt, setSentAt] = useState<number | null>(null)
   const [countdown, setCountdown] = useState('')
   const [response, setResponse] = useState<'yes' | 'no' | null>(null)
+  const [showInput, setShowInput] = useState(false)
+
+  const receiver = getPhoneToken()
+
+  useEffect(() => {
+    const hasReceiver = Boolean(receiver && receiver !== 'unknown-phone')
+    setShowInput(hasReceiver)
+  }, [receiver])
 
   useEffect(() => {
     if (!sentAt) {
@@ -30,7 +39,6 @@ function App() {
       const remaining = LOCKOUT_MS - (Date.now() - sentAt)
 
       if (remaining <= 0) {
-        setSavedMessage(null)
         setSentAt(null)
         setCountdown('')
         return
@@ -59,6 +67,7 @@ function App() {
       setSentAt(new Date(saved.time_past ?? Date.now()).getTime())
       setInputValue('')
       setResponse(null)
+      console.log('Phone token used:', getPhoneToken())
     } catch (error) {
       console.error('Failed to save message:', error)
       window.alert('Could not save the message. Check your Supabase configuration.')
@@ -72,11 +81,12 @@ function App() {
 
         if (!latest?.time_past) return
 
+        setSavedMessage(latest.message)
+        setSentAt(new Date(latest.time_past).getTime())
         const timePassed = Date.now() - new Date(latest.time_past).getTime()
 
         if (timePassed < LOCKOUT_MS) {
-          setSavedMessage(latest.message)
-          setSentAt(new Date(latest.time_past).getTime())
+          setShowInput(false)
         }
       } catch (error) {
         console.error('Failed to load latest message:', error)
@@ -86,12 +96,29 @@ function App() {
     void loadLatest()
   }, [])
 
-  const handleYes = () => {
+  const handleYes = async () => {
     setResponse('yes')
+    try {
+      await saveMessage('yes')
+      console.log('Phone token used:', getPhoneToken())
+    } catch (error) {
+      console.error('Failed to save yes response:', error)
+    }
   }
 
-  const handleNo = () => {
+  const handleNo = async () => {
     setResponse('no')
+    try {
+      await saveMessage('no')
+      console.log('Phone token used:', getPhoneToken())
+    } catch (error) {
+      console.error('Failed to save no response:', error)
+    }
+  }
+
+  const openReceiverLink = () => {
+    setShowInput(true)
+    window.location.href = `https://nellyojay.github.io/mysticky/?receiver=${encodeURIComponent(receiver)}`
   }
 
   return (
@@ -105,7 +132,7 @@ function App() {
     >
       <div className={`sticker-card ${response ? 'sticker-card--celebrate' : ''}`}>
         <div className="paper-tape" />
-        <div className="sticker-tag">little note</div>
+        <div className="sticker-tag">{receiver || 'receiver'}</div>
 
         {response === 'yes' && (
           <div className="flex flex-col items-center gap-4 py-4 text-center text-[#5b2c83]">
@@ -137,6 +164,25 @@ function App() {
 
             {!savedMessage && (
               <div className="note-box">
+                <div className="mb-3 rounded-xl bg-white/50 p-3 text-sm text-[#5b2c83]">
+                  Receiver: <strong>{receiver}</strong>
+                </div>
+
+                {!showInput && (
+                  <button
+                    type="button"
+                    className="mb-3 w-full rounded-xl bg-[#5b2c83] px-4 py-2 font-bold text-white"
+                    onClick={openReceiverLink}
+                  >
+                    Open with this receiver
+                  </button>
+                )}
+
+              </div>
+            )}
+
+            {showInput && (
+              <>
                 <textarea
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
@@ -150,7 +196,7 @@ function App() {
                 <button type="button" className="send-btn" onClick={handleSend}>
                   Send a little note
                 </button>
-              </div>
+              </>
             )}
 
             {false && (
