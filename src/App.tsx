@@ -124,9 +124,9 @@ function App() {
     setChatRoom(token)
     setResponse(null)
     setChatRoomInput(token)
-    setLoggedIn(Boolean(localStorage.getItem(LOGGED_IN)));
+    setLoggedIn(Boolean(localStorage.getItem(LOGGED_IN)))
     setLoading(false)
-  }, [chatRoom])
+  }, [])
 
   return (
     <main
