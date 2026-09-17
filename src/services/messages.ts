@@ -7,7 +7,7 @@ export const CHATROOM_MESSAGE_TABLE = 'anonymous'
 export const LOGGED_IN = 'logged_in_chat_room'
 
 export async function chatRoomExists(chat_room: string): Promise<boolean> {
-  const chatRoom = chat_room || getChatRoom()
+  const chatRoom = (chat_room || getChatRoom()).trim()
 
   if (!chatRoom) {
     return false
@@ -15,8 +15,9 @@ export async function chatRoomExists(chat_room: string): Promise<boolean> {
 
   const { data, error } = await supabase
     .from(CHATROOM_TABLE_NAME)
-    .select('chat_room')
+    .select('id')
     .eq('chat_room', chatRoom)
+    .limit(1)
 
   if (error && error.code !== 'PGRST116') {
     console.log('Failed to check room existence', error)
@@ -24,7 +25,7 @@ export async function chatRoomExists(chat_room: string): Promise<boolean> {
   }
   console.log('Room existence check result:', data)
 
-  return Boolean(!data)
+  return Array.isArray(data) && data.length > 0
 }
 
 export async function getLatestMessage(chatRoomId: string) {
@@ -50,10 +51,9 @@ export async function getLatestMessage(chatRoomId: string) {
   return data as StickerMessage | null
 }
 
-export async function saveMessage(message: string, chatRoomId: string | null) {
-  const chatRoom = chatRoomId
+export async function saveMessage(message: string, chatRoomId: string) {
 
-  if (!chatRoom) {
+  if (!message || !chatRoomId) {
     throw new Error('No active chat room found.')
   }
 
@@ -61,17 +61,36 @@ export async function saveMessage(message: string, chatRoomId: string | null) {
     .from(CHATROOM_MESSAGE_TABLE)
     .insert({
       message,
-      chat_roomId: chatRoom,
-      time_past: new Date().toISOString(),
+      chat_roomId: chatRoomId,
     })
     .select('*')
     .single()
 
   if (error) {
+    console.log('Failed to save message:', error)
     throw error
   }
 
   return data as StickerMessage
+}
+
+export async function resolveChatRoomId(chatRoom: string): Promise<string | null> {
+  if (!chatRoom) {
+    return null
+  }
+
+  const { data, error } = await supabase
+    .from(CHATROOM_TABLE_NAME)
+    .select('id')
+    .eq('chat_room', chatRoom)
+    .single()
+
+  if (error) {
+    console.error('Failed to resolve chat room ID:', error)
+    return null
+  }
+
+  return data?.id || null
 }
 
 export async function createChatRoom(chat_room: string) {
@@ -82,17 +101,11 @@ export async function createChatRoom(chat_room: string) {
     .single()
 
   if (error) {
-    console.log("Failed to create room", error)
+    console.log('Failed to create chat room:', error)
     return false;
   }
 
-  localStorage.setItem(LOGGED_IN, `${chat_room}_${data.id}`);
+  localStorage.setItem(LOGGED_IN, `${data.id}_${chat_room}`);
 
   return Boolean(data);
-}
-
-export function loggedIn() {
-  const token = localStorage.getItem(LOGGED_IN)
-
-  return Boolean(token)
 }

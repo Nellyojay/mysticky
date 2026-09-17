@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { generateCityToken, getChatRoom, PHONE_TOKEN_KEY } from './services/getToken'
-import { chatRoomExists, createChatRoom, getLatestMessage, LOGGED_IN, saveMessage } from './services/messages'
+import { chatRoomExists, createChatRoom, getLatestMessage, LOGGED_IN, resolveChatRoomId, saveMessage } from './services/messages'
 import './styles/sticker-card.css'
-import { supabase } from './lib/supabase'
 
 const LOCKOUT_MS = 3 * 60 * 60 * 1000
 
@@ -27,13 +26,19 @@ function App() {
   const [roomError, setRoomError] = useState('')
   const [loggedIn, setLoggedIn] = useState(false)
 
+  console.log('Current chat room:', chatRoom)
+
   useEffect(() => {
-    const token = getChatRoom()
-    setChatRoom(token)
-    setResponse(null)
-    setChatRoomInput(token)
-    setLoggedIn(token ? true : false);
-  }, [])
+    const loggedInToken = localStorage.getItem(LOGGED_IN)
+    if (loggedInToken) {
+      const chatRoomId = loggedInToken.split('_')[0]
+      getLatestMessage(chatRoomId).then((message) => {
+        if (message) {
+          setSavedMessage(message.message)
+        }
+      })
+    }
+  }, [chatRoom])
 
   const createChatRoomName = () => {
     const newChatRoom = generateCityToken()
@@ -50,13 +55,16 @@ function App() {
     const exists = await chatRoomExists(chatRoom)
 
     if (exists) {
-      console.log('Room exists, joining:', chatRoom)
+      setLoggedIn(exists)
       setChatRoom(chatRoom)
+
+      const chatRoomId = await resolveChatRoomId(chatRoom)
+      localStorage.setItem(LOGGED_IN, `${chatRoomId}_${chatRoom}`)
+      console.log('Logged in to existing chat room id:', chatRoomId)
       localStorage.setItem(PHONE_TOKEN_KEY, chatRoom)
       setRoomError('')
       return;
     } else {
-      console.log('Room does not exist, creating:', chatRoom)
       try {
         await createChatRoom(chatRoom)
         setLoggedIn(true)
@@ -64,11 +72,41 @@ function App() {
         localStorage.setItem(PHONE_TOKEN_KEY, chatRoom)
         setRoomError('')
       } catch (error) {
-        console.error('Failed to create room', error)
         setRoomError('Failed to create chat room. Please try again.')
       }
     }
   }
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) {
+      return console.log('Cannot send an empty message.')
+    }
+
+    const loggedInToken = localStorage.getItem(LOGGED_IN)
+    if (!loggedInToken) {
+      setRoomError('You must be logged in to send a message.')
+      return
+    }
+
+    const chatRoomId = loggedInToken.split('_')[0]
+    try {
+      await saveMessage(inputValue, chatRoomId)
+      setSavedMessage(inputValue)
+      setInputValue('')
+      setSentAt(Date.now())
+      setShowInput(false)
+    } catch (error) {
+      console.error('Failed to send message:', error)
+    }
+  }
+
+  useEffect(() => {
+    const token = getChatRoom()
+    setChatRoom(token)
+    setResponse(null)
+    setChatRoomInput(token)
+    setLoggedIn(Boolean(localStorage.getItem(LOGGED_IN)));
+  }, [chatRoom, loggedIn])
 
   return (
     <main
@@ -119,7 +157,11 @@ function App() {
                   You can only reply or get a reply after 3 hours. so take your time and
                   write your sweet thoughts
                 </p>
-                <button type="button" className="send-btn">
+                <button
+                  type="button"
+                  className="send-btn"
+                  onClick={handleSendMessage}
+                >
                   Send a little note
                 </button>
               </div>
