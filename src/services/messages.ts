@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase'
 import type { StickerMessage } from '../types/supabase'
 import { getPhoneToken } from './getToken'
 
-const TABLE_NAME = 'anonymous'
+export const TABLE_NAME = 'anonymous'
 
 export async function chatRoomExists(chatRoom: string): Promise<boolean> {
   const trimmedRoom = chatRoom.trim()
@@ -41,7 +41,7 @@ export async function getLatestMessage(chat_room: string) {
     .maybeSingle()
 
   if (error && error.code !== 'PGRST116') {
-    console.error('Failed to load latest message:', error)
+    console.error('Failed to load latest:', error)
     throw error
   }
 

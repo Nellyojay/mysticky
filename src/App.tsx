@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { generateCityToken, getPhoneToken, PHONE_TOKEN_KEY } from './services/getToken'
-import { chatRoomExists, getLatestMessage, saveMessage } from './services/messages'
+import { chatRoomExists, getLatestMessage, saveMessage, TABLE_NAME } from './services/messages'
 import './styles/sticker-card.css'
+import { supabase } from './lib/supabase'
 
 const LOCKOUT_MS = 3 * 60 * 60 * 1000
 
@@ -21,14 +22,10 @@ function App() {
   const [countdown, setCountdown] = useState('')
   const [response, setResponse] = useState<'yes' | 'no' | null>(null)
   const [showInput, setShowInput] = useState(false)
-  const [chatRoomInput, setChatRoomInput] = useState(() => getPhoneToken())
   const [chatRoom, setChatRoom] = useState(() => getPhoneToken())
+  const [chatRoomInput, setChatRoomInput] = useState(() => getPhoneToken())
   const [roomError, setRoomError] = useState('')
-
-  useEffect(() => {
-    const hasReceiver = Boolean(chatRoom && chatRoom !== 'unknown-phone')
-    setShowInput(hasReceiver)
-  }, [chatRoom])
+  console.log('okudi')
 
   useEffect(() => {
     if (!sentAt) {
@@ -76,6 +73,9 @@ function App() {
   }
 
   useEffect(() => {
+    const hasReceiver = Boolean(chatRoom && chatRoom !== 'unknown-phone')
+    setShowInput(hasReceiver)
+
     const loadLatest = async () => {
       try {
         const latest = await getLatestMessage(chatRoom)
@@ -97,31 +97,11 @@ function App() {
     void loadLatest()
   }, [chatRoom])
 
-  const handleYes = async () => {
-    setResponse('yes')
-    try {
-      await saveMessage('yes')
-      console.log('Phone token used:', getPhoneToken())
-    } catch (error) {
-      console.error('Failed to save yes response:', error)
-    }
-  }
-
-  const handleNo = async () => {
-    setResponse('no')
-    try {
-      await saveMessage('no')
-      console.log('Phone token used:', getPhoneToken())
-    } catch (error) {
-      console.error('Failed to save no response:', error)
-    }
-  }
-
   const openReceiverLink = async () => {
     const nextRoom = chatRoomInput.trim() || chatRoom
     if (!nextRoom) {
       setRoomError('Please enter a chat room first.')
-      return
+      return false;
     }
 
     try {
@@ -129,12 +109,12 @@ function App() {
 
       if (!exists) {
         setRoomError('This chat room does not exist yet. Please create a new one or try another room.')
-        return
+        return false;
       }
     } catch (error) {
       console.error('Failed to verify chat room:', error)
       setRoomError('Could not verify this chat room right now.')
-      return
+      return false;
     }
 
     setRoomError('')
@@ -143,13 +123,17 @@ function App() {
     localStorage.setItem(PHONE_TOKEN_KEY, nextRoom)
     setShowInput(true)
     window.location.href = `https://nellyojay.github.io/mysticky/?chatroom=${encodeURIComponent(nextRoom)}`
+    return true;
   }
 
   const joinChatRoom = async () => {
     const nextRoom = chatRoomInput.trim()
 
     if (!nextRoom) {
-      setRoomError('Please enter a chat room to join.')
+      const openChat = await openReceiverLink()
+      if (!openChat) {
+        setRoomError('Please enter a chat room to join.')
+      }
       return
     }
 
@@ -157,7 +141,15 @@ function App() {
       const exists = await chatRoomExists(nextRoom)
 
       if (!exists) {
-        setRoomError('This chat room does not exist. Please create a new one or try another room.')
+        setRoomError('This chat room does not exist, continue to create new chat room')
+        const { error } = await supabase
+          .from(TABLE_NAME)
+          .insert({ chat_room: nextRoom, time_past: null });
+
+        if (error) {
+          console.log(error)
+          setRoomError("Error creating new Chat room. Please try again.")
+        }
         return
       }
     } catch (error) {
@@ -178,8 +170,6 @@ function App() {
     setChatRoomInput(nextRoom)
     setChatRoom(nextRoom)
     localStorage.setItem(PHONE_TOKEN_KEY, nextRoom)
-    setShowInput(true)
-    window.location.href = `https://nellyojay.github.io/mysticky/?chatroom=${encodeURIComponent(nextRoom)}`
   }
 
   return (
@@ -195,125 +185,83 @@ function App() {
         <div className="paper-tape" />
         <div className="sticker-tag">{chatRoom || 'chat room'}</div>
 
-        {response === 'yes' && (
-          <div className="flex flex-col items-center gap-4 py-4 text-center text-[#5b2c83]">
-            <div className="text-5xl">😊</div>
-            <div className="text-2xl font-bold">Yaaayy 😊 0786911950</div>
-            <p className="text-lg text-[#4d3b2d]">
+        {response === 'yes' ? (
+          <div className="status-panel status-panel--yes">
+            <div className="emoji">😊</div>
+            <div className="status-title">Yaaayy 😊 0786911950</div>
+            <p className="status-copy">
               Call me some time so we can make plans 😊
             </p>
           </div>
-        )}
-
-        {response === 'no' && (
-          <div className="flex flex-col items-center gap-4 py-6 text-center text-[#5b2c83]">
-            <div className="text-5xl">😭</div>
-            <p className="text-lg leading-relaxed text-[#4d3b2d]">
+        ) : response === 'no' ? (
+          <div className="status-panel status-panel--no">
+            <div className="emoji">😭</div>
+            <p className="status-copy">
               eh maama nawe Nakamate😭😭. Anyway kale, I respect your decision.
               <br />
               <br />
               I hope you have a great day😊 kasta u ate enough cake😊
             </p>
           </div>
-        )}
+        ) : null}
 
-        {!response && (
-          <>
-            <h1 className="message-title">
-              {savedMessage ?? ''}
-            </h1>
+        <div className="message-layout">
+          {savedMessage ? (
+            <>
+              <h1 className="message-title">{savedMessage}</h1>
 
-            {!savedMessage && (
-              <div className="note-box">
-                <div className="mb-3 rounded-xl bg-white/50 p-3 text-sm text-[#5b2c83]">
-                  Chat room: <strong>{chatRoom}</strong>
+              {showInput && (
+                <div className="composer-box">
+                  <textarea
+                    value={inputValue}
+                    onChange={(event) => setInputValue(event.target.value)}
+                    placeholder="Tell me something... anything..."
+                    aria-label="Message"
+                  />
+                  <p className="small-note">
+                    You can only reply or get a reply after 3 hours. so take your time and
+                    write your sweet thoughts
+                  </p>
+                  <button type="button" className="send-btn" onClick={handleSend}>
+                    Send a little note
+                  </button>
                 </div>
+              )}
 
-                {!showInput && (
-                  <>
-                    <div className="mb-3 flex flex-col gap-2">
-                      <label className="text-sm font-bold text-[#5b2c83]">Chat room</label>
-                      <input
-                        value={chatRoomInput}
-                        onChange={(event) => {
-                          setChatRoomInput(event.target.value)
-                          if (roomError) setRoomError('')
-                        }}
-                        placeholder="Type a chat room code"
-                        className="rounded-xl border border-[#5b2c83]/40 bg-white/80 px-3 py-2 text-[#5b2c83] outline-none"
-                      />
-
-                      {roomError && (
-                        <p className="text-xs font-medium text-red-600">{roomError}</p>
-                      )}
-                    </div>
-
-                    <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        className="rounded-xl bg-[#5b2c83] px-4 py-2 font-bold text-white"
-                        onClick={joinChatRoom}
-                      >
-                        Join chat room
-                      </button>
-
-                      <button
-                        type="button"
-                        className="hidden rounded-xl bg-[#f4a261] px-4 py-2 font-bold text-[#5b2c83]"
-                        onClick={createNewChatRoom}
-                      >
-                        New chat room
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="hidden w-full rounded-xl border border-[#5b2c83] bg-transparent px-4 py-2 font-bold text-[#5b2c83]"
-                      onClick={openReceiverLink}
-                    >
-                      Open this chat room
-                    </button>
-                  </>
-                )}
-
+              {countdown && <div className="countdown">{countdown}</div>}
+            </>
+          ) : (
+            <div className="note-box">
+              <div className="room-badge">
+                Chat room: <strong>{chatRoom || 'Not selected'}</strong>
               </div>
-            )}
 
-            {showInput && (
-              <>
-                <textarea
-                  value={inputValue}
-                  onChange={(event) => setInputValue(event.target.value)}
-                  placeholder="Tell me something... anything..."
-                  aria-label="Message"
+              <div className="join-panel">
+                <label className="field-label">Chat room</label>
+                <input
+                  value={chatRoomInput}
+                  onChange={(event) => {
+                    setChatRoomInput(event.target.value)
+                    if (roomError) setRoomError('')
+                  }}
+                  placeholder="Type a chat room code"
+                  className="room-input"
                 />
-                <p className="small-note">
-                  You can only reply or get a reply after 3 hours. so take your time and
-                  write your sweet thoughts
-                </p>
-                <button type="button" className="send-btn" onClick={handleSend}>
-                  Send a little note
-                </button>
-              </>
-            )}
 
-            {false && (
-              <div className="mt-6 flex flex-col items-center gap-4">
-                <div className="response-box">{savedMessage}</div>
-                <div className="button-row">
-                  <button type="button" className="yes-btn" onClick={handleYes}>
-                    Yeah alright 💃🏽
+                {roomError && <p className="error-text">{roomError}</p>}
+
+                <div className="button-grid">
+                  <button type="button" className="primary-btn" onClick={joinChatRoom}>
+                    Join chat room
                   </button>
-                  <button type="button" className="no-btn" onClick={handleNo}>
-                    No thank you 😅
+                  <button type="button" className="secondary-btn" onClick={createNewChatRoom}>
+                    Create New chat room
                   </button>
                 </div>
               </div>
-            )}
-
-            {countdown && <div className="countdown">{countdown}</div>}
-          </>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   )

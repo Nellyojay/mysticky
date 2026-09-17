@@ -86,18 +86,46 @@ body {
   animation: stickerFloat 2.5s ease-in-out infinite;
 }
 
+.message-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .message-title {
   color: #5b2c83;
   font-size: clamp(1.6rem, 2vw, 2rem);
-  margin: 18px 0;
+  margin: 0;
   line-height: 1.3;
   letter-spacing: 0.5px;
-  padding-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+.status-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 10px;
+  text-align: center;
+  color: #5b2c83;
+}
+
+.status-panel--yes .status-title {
+  font-size: clamp(1.5rem, 2.3vw, 2.2rem);
+  font-weight: 800;
+}
+
+.status-copy {
+  margin: 0;
+  color: #4d3b2d;
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
 .note-box {
-  margin: 18px 0 22px;
-  padding: 16px 14px 12px;
+  margin: 0;
+  padding: 18px 16px 16px;
   background: rgba(255, 255, 255, 0.38);
   border: 2px solid rgba(91, 44, 131, 0.18);
   border-radius: 18px;
@@ -105,10 +133,32 @@ body {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
+.room-badge {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.54);
+  color: #5b2c83;
+  font-size: 0.9rem;
+}
+
+.join-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #5b2c83;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.room-input,
 textarea {
   width: 100%;
-  min-height: 100px;
-  resize: vertical;
   border: 2px solid rgba(91, 44, 131, 0.2);
   border-radius: 14px;
   padding: 12px 14px;
@@ -118,36 +168,76 @@ textarea {
   outline: none;
 }
 
+.room-input:focus,
 textarea:focus {
   border-color: rgba(91, 44, 131, 0.5);
   box-shadow: 0 0 0 3px rgba(158, 197, 254, 0.35);
 }
 
-.small-note {
-  margin-top: 12px;
-  color: rgba(33, 15, 15, 0.45);
-  font-size: 0.875rem;
-  line-height: 1.6;
+textarea {
+  min-height: 100px;
+  resize: vertical;
 }
 
+.error-text {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.primary-btn,
+.secondary-btn,
+.ghost-btn,
 .send-btn,
 .yes-btn,
 .no-btn {
   border: none;
-  padding: 14px 28px;
+  padding: 14px 16px;
   border-radius: 18px;
-  font-size: 1rem;
+  font-size: 0.98rem;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 6px 12px rgba(77, 59, 45, 0.12);
 }
 
+.primary-btn {
+  background: #5b2c83;
+  color: white;
+}
+
+.secondary-btn {
+  background: #f4a261;
+  color: #5b2c83;
+}
+
+.ghost-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(91, 44, 131, 0.45);
+  color: #5b2c83;
+}
+
 .send-btn {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 8px;
   background: rgba(104, 94, 3, 0.55);
   color: white;
+}
+
+.small-note {
+  margin: 4px 0 0;
+  color: rgba(33, 15, 15, 0.45);
+  font-size: 0.875rem;
+  line-height: 1.6;
 }
 
 .button-row {
@@ -169,37 +259,40 @@ textarea:focus {
   box-shadow: 0 8px 20px rgba(238, 66, 102, 0.25);
 }
 
+.primary-btn:hover,
+.secondary-btn:hover,
+.ghost-btn:hover,
 .send-btn:hover,
 .yes-btn:hover,
 .no-btn:hover {
-  transform: translateY(-4px) scale(1.04);
+  transform: translateY(-3px) scale(1.02);
 }
 
+.primary-btn:active,
+.secondary-btn:active,
+.ghost-btn:active,
 .send-btn:active,
 .yes-btn:active,
 .no-btn:active {
-  transform: scale(0.95);
-}
-
-.response-box {
-  margin-top: 8px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 2px solid rgba(91, 44, 131, 0.18);
-  color: #4a2b46;
-  font-size: 1rem;
-  line-height: 1.6;
-  box-shadow: 0 8px 16px rgba(91, 44, 131, 0.08);
-  transform: rotate(-1deg);
+  transform: scale(0.98);
 }
 
 .countdown {
-  margin-top: 18px;
+  margin-top: 4px;
   font-size: 0.75rem;
   color: #5b2c83;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+@media (max-width: 480px) {
+  .button-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sticker-card {
+    padding: 34px 18px 22px;
+  }
 }
 
 .sticker-card--celebrate {
