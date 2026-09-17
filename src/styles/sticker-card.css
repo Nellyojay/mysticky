@@ -1,0 +1,260 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+.hidden {
+  display: none;
+}
+
+.sticker-card {
+  position: relative;
+  width: min(100%, 540px);
+  padding: 42px 28px 30px;
+  background: linear-gradient(180deg, #fff9b1 0%, #fef3a3 100%);
+  border: 3px solid rgba(161, 123, 28, 0.52);
+  border-radius: 28px;
+  box-shadow:
+    0 18px 30px rgba(30, 21, 4, 0.28),
+    0 0 0 8px rgba(255, 255, 255, 0.12),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+  text-align: center;
+  animation: stickerAppear 0.8s ease;
+  overflow: hidden;
+}
+
+.sticker-card::before,
+.sticker-card::after {
+  content: '';
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: rgba(191, 65, 65, 0.129);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(166, 130, 38, 0.148);
+  top: 12px;
+}
+
+.sticker-card::before {
+  left: 14px;
+}
+
+.sticker-card::after {
+  right: 14px;
+}
+
+.paper-tape {
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 128px;
+  height: 24px;
+  background: rgba(171, 110, 53, 0.196);
+  border: 1px solid rgba(123, 93, 16, 0.12);
+  box-shadow: 0 1px 6px rgba(92, 64, 17, 0.1);
+}
+
+.sticker-tag {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px dashed rgba(91, 44, 131, 0.35);
+  color: #5b2c83;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-4deg);
+}
+
+.emoji {
+  font-size: 65px;
+  margin-bottom: 15px;
+  animation: stickerFloat 2.5s ease-in-out infinite;
+}
+
+.message-title {
+  color: #5b2c83;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  margin: 18px 0;
+  line-height: 1.3;
+  letter-spacing: 0.5px;
+}
+
+.note-box {
+  margin: 18px 0 22px;
+  padding: 16px 14px 12px;
+  background: rgba(255, 255, 255, 0.38);
+  border: 2px solid rgba(91, 44, 131, 0.18);
+  border-radius: 18px;
+  text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+textarea {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  border: 2px solid rgba(91, 44, 131, 0.2);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  background: rgba(255, 255, 255, 0.75);
+  color: #3c2b31;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: rgba(91, 44, 131, 0.5);
+  box-shadow: 0 0 0 3px rgba(158, 197, 254, 0.35);
+}
+
+.small-note {
+  margin-top: 12px;
+  color: rgba(33, 15, 15, 0.45);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.send-btn,
+.yes-btn,
+.no-btn {
+  border: none;
+  padding: 14px 28px;
+  border-radius: 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 6px 12px rgba(77, 59, 45, 0.12);
+}
+
+.send-btn {
+  width: 100%;
+  margin-top: 12px;
+  background: rgba(104, 94, 3, 0.55);
+  color: white;
+}
+
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.yes-btn {
+  background: linear-gradient(135deg, #00c9a7, #00a878);
+  color: white;
+  box-shadow: 0 8px 20px rgba(0, 180, 140, 0.3);
+}
+
+.no-btn {
+  background: linear-gradient(135deg, #ff6b6b, #ee4266);
+  color: white;
+  box-shadow: 0 8px 20px rgba(238, 66, 102, 0.25);
+}
+
+.send-btn:hover,
+.yes-btn:hover,
+.no-btn:hover {
+  transform: translateY(-4px) scale(1.04);
+}
+
+.send-btn:active,
+.yes-btn:active,
+.no-btn:active {
+  transform: scale(0.95);
+}
+
+.response-box {
+  margin-top: 8px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid rgba(91, 44, 131, 0.18);
+  color: #4a2b46;
+  font-size: 1rem;
+  line-height: 1.6;
+  box-shadow: 0 8px 16px rgba(91, 44, 131, 0.08);
+  transform: rotate(-1deg);
+}
+
+.countdown {
+  margin-top: 18px;
+  font-size: 0.75rem;
+  color: #5b2c83;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sticker-card--celebrate {
+  animation: stickerCelebrate 0.6s ease;
+}
+
+@keyframes stickerAppear {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes stickerFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes stickerCelebrate {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.12) rotate(2deg);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .sticker-card {
+    padding: 34px 18px 22px;
+  }
+
+  .button-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .yes-btn,
+  .no-btn {
+    width: 100%;
+  }
+}
