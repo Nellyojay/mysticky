@@ -3,6 +3,6 @@ export type StickerMessage = {
   message: string
   created_at?: string
   time_past?: string
-  phone_token?: string
+  chat_room?: string
   response?: 'yes' | 'no' | null
 }

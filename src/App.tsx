@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getPhoneToken } from './services/getToken'
-import { getLatestMessage, saveMessage } from './services/messages'
+import { generateCityToken, getPhoneToken, PHONE_TOKEN_KEY } from './services/getToken'
+import { chatRoomExists, getLatestMessage, saveMessage } from './services/messages'
 import './styles/sticker-card.css'
 
 const LOCKOUT_MS = 3 * 60 * 60 * 1000
@@ -21,8 +21,9 @@ function App() {
   const [countdown, setCountdown] = useState('')
   const [response, setResponse] = useState<'yes' | 'no' | null>(null)
   const [showInput, setShowInput] = useState(false)
-
-  const chatRoom = getPhoneToken()
+  const [chatRoomInput, setChatRoomInput] = useState(() => getPhoneToken())
+  const [chatRoom, setChatRoom] = useState(() => getPhoneToken())
+  const [roomError, setRoomError] = useState('')
 
   useEffect(() => {
     const hasReceiver = Boolean(chatRoom && chatRoom !== 'unknown-phone')
@@ -77,7 +78,7 @@ function App() {
   useEffect(() => {
     const loadLatest = async () => {
       try {
-        const latest = await getLatestMessage()
+        const latest = await getLatestMessage(chatRoom)
 
         if (!latest?.time_past) return
 
@@ -89,12 +90,12 @@ function App() {
           setShowInput(false)
         }
       } catch (error) {
-        console.error('Failed to load latest message:', error)
+        console.error('there is an error:', error)
       }
     }
 
     void loadLatest()
-  }, [])
+  }, [chatRoom])
 
   const handleYes = async () => {
     setResponse('yes')
@@ -116,9 +117,69 @@ function App() {
     }
   }
 
-  const openReceiverLink = () => {
+  const openReceiverLink = async () => {
+    const nextRoom = chatRoomInput.trim() || chatRoom
+    if (!nextRoom) {
+      setRoomError('Please enter a chat room first.')
+      return
+    }
+
+    try {
+      const exists = await chatRoomExists(nextRoom)
+
+      if (!exists) {
+        setRoomError('This chat room does not exist yet. Please create a new one or try another room.')
+        return
+      }
+    } catch (error) {
+      console.error('Failed to verify chat room:', error)
+      setRoomError('Could not verify this chat room right now.')
+      return
+    }
+
+    setRoomError('')
+    setChatRoomInput(nextRoom)
+    setChatRoom(nextRoom)
+    localStorage.setItem(PHONE_TOKEN_KEY, nextRoom)
     setShowInput(true)
-    window.location.href = `https://nellyojay.github.io/mysticky/?chatroom=${encodeURIComponent(chatRoom)}`
+    window.location.href = `https://nellyojay.github.io/mysticky/?chatroom=${encodeURIComponent(nextRoom)}`
+  }
+
+  const joinChatRoom = async () => {
+    const nextRoom = chatRoomInput.trim()
+
+    if (!nextRoom) {
+      setRoomError('Please enter a chat room to join.')
+      return
+    }
+
+    try {
+      const exists = await chatRoomExists(nextRoom)
+
+      if (!exists) {
+        setRoomError('This chat room does not exist. Please create a new one or try another room.')
+        return
+      }
+    } catch (error) {
+      console.error('Failed to verify chat room:', error)
+      setRoomError('Could not verify this chat room right now.')
+      return
+    }
+
+    setRoomError('')
+    setChatRoom(nextRoom)
+    localStorage.setItem(PHONE_TOKEN_KEY, nextRoom)
+    setShowInput(true)
+    window.location.href = `https://nellyojay.github.io/mysticky/?chatroom=${encodeURIComponent(nextRoom)}`
+  }
+
+  const createNewChatRoom = () => {
+    const nextRoom = generateCityToken()
+    setChatRoomInput(nextRoom)
+    setChatRoom(nextRoom)
+    localStorage.setItem(PHONE_TOKEN_KEY, nextRoom)
+    setShowInput(true)
+    window.location.href = `https://nellyojay.github.io/mysticky/?chatroom=${encodeURIComponent(nextRoom)}`
   }
 
   return (
@@ -127,7 +188,7 @@ function App() {
       style={{
         background:
           'radial-gradient(circle at top left, rgba(235, 86, 86, 0.74), transparent 30%), radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.2), transparent 25%), linear-gradient(135deg, #f7d77a, #f4a261, #c77dff, #9ec5fe)',
-        fontFamily: '"Comic Sans MS", "Trebuchet MS", cursive, sans-serif',
+        fontFamily: 'Comic Sans MS, Trebuchet MS, cursive, sans-serif',
       }}
     >
       <div className={`sticker-card ${response ? 'sticker-card--celebrate' : ''}`}>
@@ -169,13 +230,50 @@ function App() {
                 </div>
 
                 {!showInput && (
-                  <button
-                    type="button"
-                    className="mb-3 w-full rounded-xl bg-[#5b2c83] px-4 py-2 font-bold text-white"
-                    onClick={openReceiverLink}
-                  >
-                    Open this chat room
-                  </button>
+                  <>
+                    <div className="mb-3 flex flex-col gap-2">
+                      <label className="text-sm font-bold text-[#5b2c83]">Chat room</label>
+                      <input
+                        value={chatRoomInput}
+                        onChange={(event) => {
+                          setChatRoomInput(event.target.value)
+                          if (roomError) setRoomError('')
+                        }}
+                        placeholder="Type a chat room code"
+                        className="rounded-xl border border-[#5b2c83]/40 bg-white/80 px-3 py-2 text-[#5b2c83] outline-none"
+                      />
+
+                      {roomError && (
+                        <p className="text-xs font-medium text-red-600">{roomError}</p>
+                      )}
+                    </div>
+
+                    <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        className="rounded-xl bg-[#5b2c83] px-4 py-2 font-bold text-white"
+                        onClick={joinChatRoom}
+                      >
+                        Join chat room
+                      </button>
+
+                      <button
+                        type="button"
+                        className="hidden rounded-xl bg-[#f4a261] px-4 py-2 font-bold text-[#5b2c83]"
+                        onClick={createNewChatRoom}
+                      >
+                        New chat room
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="hidden w-full rounded-xl border border-[#5b2c83] bg-transparent px-4 py-2 font-bold text-[#5b2c83]"
+                      onClick={openReceiverLink}
+                    >
+                      Open this chat room
+                    </button>
+                  </>
                 )}
 
               </div>
