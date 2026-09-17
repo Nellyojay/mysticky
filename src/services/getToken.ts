@@ -1,4 +1,5 @@
-export const PHONE_TOKEN_KEY = 'sticker_phone_token'
+
+export const PHONE_TOKEN_KEY = 'chat_room_name'
 
 export function generateCityToken(): string {
   const CITY_CODES = [
@@ -29,7 +30,7 @@ export function generateCityToken(): string {
   return `${cityEntry.city}${cityEntry.code}${number}`
 }
 
-export function getPhoneToken(): string {
+export function getChatRoom(): string {
   if (typeof window === 'undefined') {
     return 'unknown-phone'
   }
