@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getLatestMessage, saveMessage } from './services/messages'
 import './styles/sticker-card.css'
 
 const LOCKOUT_MS = 3 * 60 * 60 * 1000
@@ -35,7 +36,7 @@ function App() {
         return
       }
 
-      setCountdown(`Next note in: ${formatCountdown(remaining)}`)
+      setCountdown(`Reply in: ${formatCountdown(remaining)}`)
     }
 
     tick()
@@ -44,7 +45,7 @@ function App() {
     return () => window.clearInterval(intervalId)
   }, [sentAt])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = inputValue.trim()
 
     if (!trimmed) {
@@ -52,11 +53,38 @@ function App() {
       return
     }
 
-    setSavedMessage(trimmed)
-    setSentAt(Date.now())
-    setInputValue('')
-    setResponse(null)
+    try {
+      const saved = await saveMessage(trimmed)
+      setSavedMessage(saved.message)
+      setSentAt(new Date(saved.time_past ?? Date.now()).getTime())
+      setInputValue('')
+      setResponse(null)
+    } catch (error) {
+      console.error('Failed to save message:', error)
+      window.alert('Could not save the message. Check your Supabase configuration.')
+    }
   }
+
+  useEffect(() => {
+    const loadLatest = async () => {
+      try {
+        const latest = await getLatestMessage()
+
+        if (!latest?.time_past) return
+
+        const timePassed = Date.now() - new Date(latest.time_past).getTime()
+
+        if (timePassed < LOCKOUT_MS) {
+          setSavedMessage(latest.message)
+          setSentAt(new Date(latest.time_past).getTime())
+        }
+      } catch (error) {
+        console.error('Failed to load latest message:', error)
+      }
+    }
+
+    void loadLatest()
+  }, [])
 
   const handleYes = () => {
     setResponse('yes')
@@ -103,8 +131,6 @@ function App() {
 
         {!response && (
           <>
-            <div className={`emoji ${savedMessage ? 'visible' : 'hidden'}`}>🙃</div>
-
             <h1 className="message-title">
               {savedMessage ?? ''}
             </h1>
@@ -127,7 +153,7 @@ function App() {
               </div>
             )}
 
-            {savedMessage && (
+            {false && (
               <div className="mt-6 flex flex-col items-center gap-4">
                 <div className="response-box">{savedMessage}</div>
                 <div className="button-row">
