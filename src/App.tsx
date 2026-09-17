@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { generateCityToken, getChatRoom, PHONE_TOKEN_KEY } from './services/getToken'
 import { chatRoomExists, createChatRoom, getLatestMessage, LOGGED_IN, resolveChatRoomId, saveMessage } from './services/messages'
+import Loader from './pages/components/loader'
 import './styles/sticker-card.css'
 
 const LOCKOUT_MS = 3 * 60 * 60 * 1000
@@ -25,8 +26,7 @@ function App() {
   const [chatRoomInput, setChatRoomInput] = useState(() => getChatRoom())
   const [roomError, setRoomError] = useState('')
   const [loggedIn, setLoggedIn] = useState(false)
-
-  console.log('Current chat room:', chatRoom)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loggedInToken = localStorage.getItem(LOGGED_IN)
@@ -46,12 +46,23 @@ function App() {
     setChatRoomInput(newChatRoom)
   }
 
+  const handleLogout = () => {
+    localStorage.clear()
+    setLoggedIn(false)
+    setChatRoom('')
+    setChatRoomInput('')
+    setSavedMessage(null)
+    setInputValue('')
+    setResponse(null)
+  }
+
   const handleCreationAndJoin = async () => {
     const chatRoom = chatRoomInput
     if (!chatRoom) {
       setRoomError('Please enter a chat room code.')
       return
     }
+    setLoading(true)
     const exists = await chatRoomExists(chatRoom)
 
     if (exists) {
@@ -60,8 +71,9 @@ function App() {
 
       const chatRoomId = await resolveChatRoomId(chatRoom)
       localStorage.setItem(LOGGED_IN, `${chatRoomId}_${chatRoom}`)
-      console.log('Logged in to existing chat room id:', chatRoomId)
       localStorage.setItem(PHONE_TOKEN_KEY, chatRoom)
+      window.location.reload()
+      setLoading(false)
       setRoomError('')
       return;
     } else {
@@ -71,8 +83,10 @@ function App() {
         setChatRoom(chatRoom)
         localStorage.setItem(PHONE_TOKEN_KEY, chatRoom)
         setRoomError('')
+        setLoading(false)
       } catch (error) {
         setRoomError('Failed to create chat room. Please try again.')
+        setLoading(false)
       }
     }
   }
@@ -106,7 +120,8 @@ function App() {
     setResponse(null)
     setChatRoomInput(token)
     setLoggedIn(Boolean(localStorage.getItem(LOGGED_IN)));
-  }, [chatRoom, loggedIn])
+    setLoading(false)
+  }, [chatRoom])
 
   return (
     <main
@@ -142,7 +157,9 @@ function App() {
         ) : null}
 
         <div className="message-layout">
-          {loggedIn ? (
+          {loading ? (
+            <Loader label="Opening your note" />
+          ) : loggedIn ? (
             <>
               <h1 className="message-title">{savedMessage ? savedMessage : 'Welcome to myStickyNote'}</h1>
 
@@ -153,7 +170,7 @@ function App() {
                   placeholder="Tell me something... anything..."
                   aria-label="Message"
                 />
-                <p className="small-note">
+                <p className="small-note hidden">
                   You can only reply or get a reply after 3 hours. so take your time and
                   write your sweet thoughts
                 </p>
@@ -167,6 +184,14 @@ function App() {
               </div>
 
               <div className="countdown">{countdown}</div>
+
+              <button
+                type="button"
+                className="logout-btn"
+                onClick={handleLogout}
+              >
+                Log out
+              </button>
             </>
           ) : (
             <div className="note-box">

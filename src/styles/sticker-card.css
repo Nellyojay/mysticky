@@ -17,6 +17,71 @@ body {
   display: none;
 }
 
+.cute-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 2px solid rgba(91, 44, 131, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: #5b2c83;
+  font-size: 0.78rem;
+  font-weight: 800;
+  box-shadow: 0 5px 12px rgba(77, 59, 45, 0.1);
+}
+
+.cute-loader__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.cute-loader__dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f4a261;
+  animation: loaderBounce 0.9s ease-in-out infinite;
+}
+
+.cute-loader__dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.cute-loader__dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes loaderBounce {
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@keyframes loaderSparkle {
+
+  0%,
+  100% {
+    transform: rotate(-12deg) scale(0.85);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: rotate(12deg) scale(1.15);
+    opacity: 1;
+  }
+}
+
 .sticker-card {
   position: relative;
   width: min(100%, 540px);
@@ -175,7 +240,7 @@ textarea:focus {
 }
 
 textarea {
-  min-height: 100px;
+  min-height: 70px;
   resize: vertical;
 }
 
@@ -217,6 +282,24 @@ textarea {
 .secondary-btn {
   background: #f4a261;
   color: #5b2c83;
+}
+
+.logout-btn {
+  align-self: center;
+  padding: 7px 12px;
+  border: 1px dashed rgba(91, 44, 131, 0.45);
+  border-radius: 8px;
+  background: transparent;
+  color: #5b2c83;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+  margin-top: -16px;
+}
+
+.logout-btn:hover {
+  background: rgba(91, 44, 131, 0.08);
 }
 
 .ghost-btn {
