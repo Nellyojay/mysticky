@@ -22,12 +22,12 @@ function App() {
   const [response, setResponse] = useState<'yes' | 'no' | null>(null)
   const [showInput, setShowInput] = useState(false)
 
-  const receiver = getPhoneToken()
+  const chatRoom = getPhoneToken()
 
   useEffect(() => {
-    const hasReceiver = Boolean(receiver && receiver !== 'unknown-phone')
+    const hasReceiver = Boolean(chatRoom && chatRoom !== 'unknown-phone')
     setShowInput(hasReceiver)
-  }, [receiver])
+  }, [chatRoom])
 
   useEffect(() => {
     if (!sentAt) {
@@ -118,7 +118,7 @@ function App() {
 
   const openReceiverLink = () => {
     setShowInput(true)
-    window.location.href = `https://nellyojay.github.io/mysticky/?receiver=${encodeURIComponent(receiver)}`
+    window.location.href = `https://nellyojay.github.io/mysticky/?chatroom=${encodeURIComponent(chatRoom)}`
   }
 
   return (
@@ -132,7 +132,7 @@ function App() {
     >
       <div className={`sticker-card ${response ? 'sticker-card--celebrate' : ''}`}>
         <div className="paper-tape" />
-        <div className="sticker-tag">{receiver || 'receiver'}</div>
+        <div className="sticker-tag">{chatRoom || 'chat room'}</div>
 
         {response === 'yes' && (
           <div className="flex flex-col items-center gap-4 py-4 text-center text-[#5b2c83]">
@@ -165,7 +165,7 @@ function App() {
             {!savedMessage && (
               <div className="note-box">
                 <div className="mb-3 rounded-xl bg-white/50 p-3 text-sm text-[#5b2c83]">
-                  Receiver: <strong>{receiver}</strong>
+                  Chat room: <strong>{chatRoom}</strong>
                 </div>
 
                 {!showInput && (
@@ -174,7 +174,7 @@ function App() {
                     className="mb-3 w-full rounded-xl bg-[#5b2c83] px-4 py-2 font-bold text-white"
                     onClick={openReceiverLink}
                   >
-                    Open with this receiver
+                    Open this chat room
                   </button>
                 )}
 
