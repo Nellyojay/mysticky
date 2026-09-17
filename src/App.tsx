@@ -29,6 +29,11 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const value = sentAt || showInput || setCountdown('') || formatCountdown(LOCKOUT_MS)
+    console.log(value);
+  }, [])
+
+  useEffect(() => {
     const loggedInToken = localStorage.getItem(LOGGED_IN)
     if (loggedInToken) {
       const chatRoomId = loggedInToken.split('_')[0]
