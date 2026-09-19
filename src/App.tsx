@@ -185,7 +185,7 @@ function App() {
     >
       <div className={`sticker-card ${response ? 'sticker-card--celebrate' : ''}`}>
         <div className="paper-tape" />
-        <div className="sticker-tag">{stickyCode || 'sticky note'}</div>
+        <div className="sticker-tag sticky top-2 z-10">{stickyCode || 'sticky note'}</div>
 
         {response === 'yes' ? (
           <div className="status-panel status-panel--yes">
