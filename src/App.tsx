@@ -225,7 +225,12 @@ function App() {
             <Loader label="Opening sticky note" />
           ) : loggedIn ? (
             <>
-              <h1 className="message-title">{savedMessage ? savedMessage : 'Welcome to myStickyNote'}</h1>
+              <h1
+                key={savedMessage || 'welcome-message'}
+                className={`message-title ${savedMessage ? 'message-title--saved' : ''}`}
+              >
+                {savedMessage || 'Welcome to myStickyNote'}
+              </h1>
 
               <div className="sticky bottom-2 z-10">
                 <div className="composer-box">
