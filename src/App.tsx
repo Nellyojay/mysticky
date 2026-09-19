@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { generateCityToken, getStickyCode, STICKY_CODE_KEY } from './services/getToken'
-import { createStickyNote, getLatestMessage, LOGGED_IN, resolveStickyNoteId, saveMessage, stickyCodeExists } from './services/messages'
+import { createStickyNote, getLatestMessage, LOGGED_IN, saveMessage, stickyCodeExists } from './services/messages'
 import Loader from './pages/components/loader'
 import './styles/sticker-card.css'
 
@@ -42,16 +42,21 @@ function App() {
   }, [])
 
   useEffect(() => {
-    const loggedInToken = localStorage.getItem(LOGGED_IN)
-    if (loggedInToken) {
-      const stickyNoteId = loggedInToken.split('_')[0]
-      getLatestMessage(stickyNoteId).then((message) => {
+    const loadLatestMessage = async () => {
+      const loggedInToken = localStorage.getItem(LOGGED_IN)
+      const [_exists, stickyNote] = await stickyCodeExists(stickyCode)
+      const stickyNoteId = loggedInToken?.split('_')[0] || stickyNote?.id
+
+      if (stickyNoteId) {
+        const message = await getLatestMessage(stickyNoteId)
         if (message) {
           setSavedMessage(message.message)
         }
-      })
+      }
     }
-  }, [stickyCode])
+
+    void loadLatestMessage()
+  }, [stickyCode, loggedIn])
 
   const createStickyCode = () => {
     const newStickyCode = generateCityToken()
@@ -77,14 +82,13 @@ function App() {
     }
     const loadingStartedAt = Date.now()
     setLoading(true)
-    const exists = await stickyCodeExists(code)
+    const [exists, stickyNote] = await stickyCodeExists(code)
 
-    if (exists) {
+    if (exists && stickyNote) {
       setLoggedIn(exists)
       setStickyCode(code)
 
-      const stickyNoteId = await resolveStickyNoteId(code)
-      localStorage.setItem(LOGGED_IN, `${stickyNoteId}_${code}`)
+      localStorage.setItem(LOGGED_IN, `${stickyNote.id}_${code}`)
       localStorage.setItem(STICKY_CODE_KEY, code)
       await waitForLoader(loadingStartedAt)
       setLoading(false)
@@ -151,7 +155,7 @@ function App() {
     const initializeStickyNote = async () => {
       if (token) {
         console.log('Checking if sticky code exists in database:', token)
-        const exists = await stickyCodeExists(token)
+        const [exists] = await stickyCodeExists(token)
         console.log(`Sticky code ${token} exists:`, exists)
 
         if (!exists) {

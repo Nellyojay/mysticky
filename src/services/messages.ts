@@ -6,11 +6,11 @@ export const STICKY_NOTE_TABLE_NAME = 'sticky_note'
 export const STICKY_NOTE_MESSAGE_TABLE = 'sticky_message'
 export const LOGGED_IN = 'logged_in_sticky_note'
 
-export async function stickyCodeExists(stickyCode: string): Promise<boolean> {
+export async function stickyCodeExists(stickyCode: string): Promise<[boolean, { id: string } | null]> {
   const code = (stickyCode || getStickyCode()).trim()
 
   if (!code) {
-    return false
+    return [false, null]
   }
 
   const { data, error } = await supabase
@@ -25,7 +25,7 @@ export async function stickyCodeExists(stickyCode: string): Promise<boolean> {
   }
   console.log('Sticky code existence check result:', data)
 
-  return Array.isArray(data) && data.length > 0
+  return [Array.isArray(data) && data.length > 0, data?.[0] || null]
 }
 
 export async function getLatestMessage(stickyNoteId: string) {
