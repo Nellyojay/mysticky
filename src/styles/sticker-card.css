@@ -225,6 +225,7 @@ textarea {
 .room-input:focus,
 textarea:focus {
   border-color: rgba(91, 44, 131, 0.5);
+  background: fixed rgba(255, 255, 255);
   box-shadow: 0 0 0 3px rgba(158, 197, 254, 0.35);
 }
 
@@ -261,7 +262,7 @@ textarea:focus {
 }
 
 textarea {
-  min-height: 70px;
+  min-height: 50px;
   resize: vertical;
   white-space: pre-wrap;
   tab-size: 4;
@@ -312,7 +313,7 @@ textarea {
   padding: 7px 12px;
   border: 1px dashed rgba(91, 44, 131, 0.45);
   border-radius: 8px;
-  background: transparent;
+  background: linear-gradient(180deg, #fff9b1 0%, #f2e68e 100%);
   color: #5b2c83;
   font-size: 0.9rem;
   font-weight: 700;
@@ -337,6 +338,10 @@ textarea {
   margin-top: 8px;
   background: rgba(104, 94, 3, 0.55);
   color: white;
+}
+
+.composer-box:has(textarea:focus) .send-btn {
+  background: rgba(104, 94, 3);
 }
 
 .small-note {

@@ -227,35 +227,37 @@ function App() {
             <>
               <h1 className="message-title">{savedMessage ? savedMessage : 'Welcome to myStickyNote'}</h1>
 
-              <div className="composer-box">
-                <textarea
-                  value={inputValue}
-                  onChange={(event) => setInputValue(event.target.value)}
-                  placeholder="Tell me something... anything..."
-                  aria-label="Message"
-                />
-                <p className="small-note hidden">
-                  You can only reply or get a reply after 3 hours. so take your time and
-                  write your sweet thoughts
-                </p>
+              <div className="sticky bottom-2 z-10">
+                <div className="composer-box">
+                  <textarea
+                    value={inputValue}
+                    onChange={(event) => setInputValue(event.target.value)}
+                    placeholder="Tell me something... anything..."
+                    aria-label="Message"
+                  />
+                  <p className="small-note hidden">
+                    You can only reply or get a reply after 3 hours. so take your time and
+                    write your sweet thoughts
+                  </p>
+                  <button
+                    type="button"
+                    className="send-btn mb-4"
+                    onClick={handleSendMessage}
+                  >
+                    Send a little note
+                  </button>
+                </div>
+
+                <div className="countdown">{countdown}</div>
+
                 <button
                   type="button"
-                  className="send-btn"
-                  onClick={handleSendMessage}
+                  className="logout-btn"
+                  onClick={handleLogout}
                 >
-                  Send a little note
+                  Close Sticky Note
                 </button>
               </div>
-
-              <div className="countdown">{countdown}</div>
-
-              <button
-                type="button"
-                className="logout-btn"
-                onClick={handleLogout}
-              >
-                Close Sticky Note
-              </button>
             </>
           ) : (
             <div className="note-box">
