@@ -93,7 +93,7 @@ export async function resolveStickyNoteId(stickyCode: string): Promise<string | 
   return data?.id || null
 }
 
-export async function createStickyCode(stickyCode: string) {
+export async function createStickyNote(stickyCode: string) {
   const { data, error } = await supabase
     .from(STICKY_NOTE_TABLE_NAME)
     .insert({ sticky_code: stickyCode })

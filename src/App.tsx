@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { generateCityToken, getStickyCode, STICKY_CODE_KEY } from './services/getToken'
-import { createStickyCode, getLatestMessage, LOGGED_IN, resolveStickyNoteId, saveMessage, stickyCodeExists } from './services/messages'
+import { createStickyNote, getLatestMessage, LOGGED_IN, resolveStickyNoteId, saveMessage, stickyCodeExists } from './services/messages'
 import Loader from './pages/components/loader'
 import './styles/sticker-card.css'
 
@@ -45,7 +45,7 @@ function App() {
     }
   }, [stickyCode])
 
-  const createStickyCodeName = () => {
+  const createStickyCode = () => {
     const newStickyCode = generateCityToken()
     setStickyCode(newStickyCode)
     setStickyCodeInput(newStickyCode)
@@ -61,38 +61,46 @@ function App() {
     setResponse(null)
   }
 
-  const handleOpenStickyNote = async () => {
-    const stickyCode = stickyCodeInput
-    if (!stickyCode.trim()) {
+  const openStickyNoteHandler = async () => {
+    const code = stickyCodeInput.trim()
+    if (!code) {
       setStickyCodeError('Please enter a sticky code.')
       return
     }
-    setLoading(true)
-    const exists = await stickyCodeExists(stickyCode)
+    const exists = await stickyCodeExists(code)
 
     if (exists) {
+      setLoading(true)
       setLoggedIn(exists)
       setStickyCode(stickyCode)
 
       const stickyNoteId = await resolveStickyNoteId(stickyCode)
       localStorage.setItem(LOGGED_IN, `${stickyNoteId}_${stickyCode}`)
       localStorage.setItem(STICKY_CODE_KEY, stickyCode)
-      window.location.reload()
       setLoading(false)
       setStickyCodeError('')
-      return;
     } else {
-      try {
-        await createStickyCode(stickyCode)
-        setLoggedIn(true)
-        setStickyCode(stickyCode)
-        localStorage.setItem(STICKY_CODE_KEY, stickyCode)
-        setStickyCodeError('')
-        setLoading(false)
-      } catch (error) {
-        setStickyCodeError('Failed to create sticky note. Please try again.')
-        setLoading(false)
-      }
+      setStickyCodeError(`Sticky code does not exist. Would you like to create sticky note - ${stickyCodeInput.trim()}?`)
+    }
+  }
+
+  const createStickyNoteHandler = async () => {
+    const code = stickyCodeInput.trim()
+    if (!code) {
+      setStickyCodeError('Please enter a sticky code.')
+      return
+    }
+    setLoading(true)
+    try {
+      await createStickyNote(code)
+      setLoggedIn(true)
+      setStickyCode(code)
+      localStorage.setItem(STICKY_CODE_KEY, code)
+      setStickyCodeError('')
+      setLoading(false)
+    } catch (error) {
+      setStickyCodeError('Failed to create sticky note. Please try again.')
+      setLoading(false)
     }
   }
 
@@ -121,12 +129,29 @@ function App() {
 
   useEffect(() => {
     const token = getStickyCode()
+    console.log('Retrieved sticky code:', token)
+
+    if (token) {
+      console.log('Checking if sticky code exists in database:', token)
+      stickyCodeExists(token).then((exists) => {
+        console.log(`Sticky code ${token} exists:`, exists)
+
+        if (!exists) {
+          setLoggedIn(false);
+          localStorage.clear();
+          setStickyCodeError(`Sticky code does not exist. Would you like to create sticky note - ${token}?`);
+        } else {
+          setStickyCodeError('')
+        }
+      })
+    }
+
     setStickyCode(token)
     setResponse(null)
     setStickyCodeInput(token)
     setLoggedIn(Boolean(localStorage.getItem(LOGGED_IN)))
     setLoading(false)
-  }, [])
+  }, [stickyCode])
 
   return (
     <main
@@ -206,12 +231,21 @@ function App() {
 
               <div className="join-panel">
                 <label className="field-label">Sticky code</label>
-                <input
-                  value={stickyCodeInput}
-                  onChange={(event) => setStickyCodeInput(event.target.value)}
-                  placeholder="Type a sticky code"
-                  className={`room-input ${stickyCodeError ? 'border-red-500' : ''}`}
-                />
+                <div className="sticky-code-input-area">
+                  <input
+                    value={stickyCodeInput}
+                    onChange={(event) => setStickyCodeInput(event.target.value)}
+                    placeholder="Type a sticky code"
+                    className={`room-input ${stickyCodeError ? 'border-red-500' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    className="generate-code-btn"
+                    onClick={createStickyCode}
+                  >
+                    Generate code
+                  </button>
+                </div>
 
                 {stickyCodeError && <p className="error-text">{stickyCodeError}</p>}
 
@@ -219,14 +253,14 @@ function App() {
                   <button
                     type="button"
                     className="primary-btn"
-                    onClick={handleOpenStickyNote}
+                    onClick={openStickyNoteHandler}
                   >
                     Open sticky note
                   </button>
                   <button
                     type="button"
                     className="secondary-btn"
-                    onClick={createStickyCodeName}
+                    onClick={createStickyNoteHandler}
                   >
                     Create New sticky note
                   </button>
@@ -234,9 +268,6 @@ function App() {
               </div>
             </div>
           )}
-
-
-
         </div>
       </div>
     </main>

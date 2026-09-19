@@ -239,6 +239,38 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(158, 197, 254, 0.35);
 }
 
+.sticky-code-input-area {
+  position: relative;
+}
+
+.sticky-code-input-area .room-input {
+  padding-right: 132px;
+}
+
+.generate-code-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  border: 1px solid rgba(91, 44, 131, 0.2);
+  border-radius: 9px;
+  padding: 7px 9px;
+  color: #5b2c83;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.generate-code-btn:hover {
+  background: #fff;
+  transform: translateY(-50%) translateY(-1px);
+}
+
+.generate-code-btn:active {
+  transform: translateY(-50%) scale(0.98);
+}
+
 textarea {
   min-height: 70px;
   resize: vertical;
