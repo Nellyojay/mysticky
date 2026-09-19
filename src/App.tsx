@@ -5,6 +5,14 @@ import Loader from './pages/components/loader'
 import './styles/sticker-card.css'
 
 const LOCKOUT_MS = 3 * 60 * 60 * 1000
+const LOADER_DURATION_MS = 3000
+
+const waitForLoader = async (startedAt: number) => {
+  const remainingTime = LOADER_DURATION_MS - (Date.now() - startedAt)
+  if (remainingTime > 0) {
+    await new Promise((resolve) => setTimeout(resolve, remainingTime))
+  }
+}
 
 const formatCountdown = (msLeft: number) => {
   const totalSeconds = Math.max(0, Math.ceil(msLeft / 1000))
@@ -67,19 +75,23 @@ function App() {
       setStickyCodeError('Please enter a sticky code.')
       return
     }
+    const loadingStartedAt = Date.now()
+    setLoading(true)
     const exists = await stickyCodeExists(code)
 
     if (exists) {
-      setLoading(true)
       setLoggedIn(exists)
-      setStickyCode(stickyCode)
+      setStickyCode(code)
 
-      const stickyNoteId = await resolveStickyNoteId(stickyCode)
-      localStorage.setItem(LOGGED_IN, `${stickyNoteId}_${stickyCode}`)
-      localStorage.setItem(STICKY_CODE_KEY, stickyCode)
+      const stickyNoteId = await resolveStickyNoteId(code)
+      localStorage.setItem(LOGGED_IN, `${stickyNoteId}_${code}`)
+      localStorage.setItem(STICKY_CODE_KEY, code)
+      await waitForLoader(loadingStartedAt)
       setLoading(false)
       setStickyCodeError('')
     } else {
+      await waitForLoader(loadingStartedAt)
+      setLoading(false)
       setStickyCodeError(`Sticky code does not exist. Would you like to create sticky note - ${stickyCodeInput.trim()}?`)
     }
   }
@@ -90,15 +102,19 @@ function App() {
       setStickyCodeError('Please enter a sticky code.')
       return
     }
+    const loadingStartedAt = Date.now()
     setLoading(true)
+
     try {
       await createStickyNote(code)
       setLoggedIn(true)
       setStickyCode(code)
       localStorage.setItem(STICKY_CODE_KEY, code)
+      await waitForLoader(loadingStartedAt)
       setStickyCodeError('')
       setLoading(false)
     } catch (error) {
+      await waitForLoader(loadingStartedAt)
       setStickyCodeError('Failed to create sticky note. Please try again.')
       setLoading(false)
     }
@@ -128,30 +144,35 @@ function App() {
   }
 
   useEffect(() => {
+    const loadingStartedAt = Date.now()
     const token = getStickyCode()
     console.log('Retrieved sticky code:', token)
 
-    if (token) {
-      console.log('Checking if sticky code exists in database:', token)
-      stickyCodeExists(token).then((exists) => {
+    const initializeStickyNote = async () => {
+      if (token) {
+        console.log('Checking if sticky code exists in database:', token)
+        const exists = await stickyCodeExists(token)
         console.log(`Sticky code ${token} exists:`, exists)
 
         if (!exists) {
-          setLoggedIn(false);
+          setLoggedIn(false)
           localStorage.clear();
           setStickyCodeError(`Sticky code does not exist. Would you like to create sticky note - ${token}?`);
         } else {
           setStickyCodeError('')
         }
-      })
+      }
+
+      setStickyCode(token)
+      setResponse(null)
+      setStickyCodeInput(token)
+      setLoggedIn(Boolean(localStorage.getItem(LOGGED_IN)))
+      await waitForLoader(loadingStartedAt)
+      setLoading(false)
     }
 
-    setStickyCode(token)
-    setResponse(null)
-    setStickyCodeInput(token)
-    setLoggedIn(Boolean(localStorage.getItem(LOGGED_IN)))
-    setLoading(false)
-  }, [stickyCode])
+    void initializeStickyNote()
+  }, [])
 
   return (
     <main
@@ -188,7 +209,7 @@ function App() {
 
         <div className="message-layout">
           {loading ? (
-            <Loader label="Opening your note" />
+            <Loader label="Opening sticky note" />
           ) : loggedIn ? (
             <>
               <h1 className="message-title">{savedMessage ? savedMessage : 'Welcome to myStickyNote'}</h1>
@@ -253,16 +274,22 @@ function App() {
                   <button
                     type="button"
                     className="primary-btn"
-                    onClick={openStickyNoteHandler}
+                    onClick={() => {
+                      if (stickyCodeError.includes('Would you like to create sticky note')) {
+                        setStickyCodeError('')
+                      } else {
+                        openStickyNoteHandler()
+                      }
+                    }}
                   >
-                    Open sticky note
+                    {stickyCodeError.includes('Would you like to create sticky note') ? 'No, cancel' : 'Open sticky note'}
                   </button>
                   <button
                     type="button"
                     className="secondary-btn"
                     onClick={createStickyNoteHandler}
                   >
-                    Create New sticky note
+                    {stickyCodeError.includes('Would you like to create sticky note') ? 'Yes, create it' : 'Create new sticky note'}
                   </button>
                 </div>
               </div>
