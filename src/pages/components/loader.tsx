@@ -2,6 +2,7 @@ type LoaderProps = {
   label?: string
 }
 
+/** Displays the animated loading indicator used while a sticky note opens. */
 function Loader({ label = 'Loading' }: LoaderProps) {
   return (
     <div className="cute-loader" role="status" aria-label={label}>

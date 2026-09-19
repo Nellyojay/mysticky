@@ -7,6 +7,7 @@ import './styles/sticker-card.css'
 const LOCKOUT_MS = 3 * 60 * 60 * 1000
 const LOADER_DURATION_MS = 3000
 
+/** Keeps the loader visible for at least the configured duration. */
 const waitForLoader = async (startedAt: number) => {
   const remainingTime = LOADER_DURATION_MS - (Date.now() - startedAt)
   if (remainingTime > 0) {
@@ -14,6 +15,7 @@ const waitForLoader = async (startedAt: number) => {
   }
 }
 
+/** Converts milliseconds into an hours, minutes, and seconds countdown. */
 const formatCountdown = (msLeft: number) => {
   const totalSeconds = Math.max(0, Math.ceil(msLeft / 1000))
   const hours = Math.floor(totalSeconds / 3600)
@@ -23,6 +25,7 @@ const formatCountdown = (msLeft: number) => {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
+/** Renders the sticky note application and manages its note lifecycle. */
 function App() {
   const [inputValue, setInputValue] = useState('')
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
@@ -42,6 +45,7 @@ function App() {
   }, [])
 
   useEffect(() => {
+    /** Loads the latest message for the active sticky note. */
     const loadLatestMessage = async () => {
       const loggedInToken = localStorage.getItem(LOGGED_IN)
       const [_exists, stickyNote] = await stickyCodeExists(stickyCode)
@@ -58,12 +62,14 @@ function App() {
     void loadLatestMessage()
   }, [stickyCode, loggedIn])
 
+  /** Generates a code and places it in the sticky-code input. */
   const createStickyCode = () => {
     const newStickyCode = generateCityToken()
     setStickyCode(newStickyCode)
     setStickyCodeInput(newStickyCode)
   }
 
+  /** Closes the active sticky note and clears the local session. */
   const handleLogout = () => {
     localStorage.clear()
     setLoggedIn(false)
@@ -74,6 +80,7 @@ function App() {
     setResponse(null)
   }
 
+  /** Opens an existing sticky note after validating its code. */
   const openStickyNoteHandler = async () => {
     const code = stickyCodeInput.trim()
     if (!code) {
@@ -100,6 +107,7 @@ function App() {
     }
   }
 
+  /** Creates a new sticky note from the entered code. */
   const createStickyNoteHandler = async () => {
     const code = stickyCodeInput.trim()
     if (!code) {
@@ -124,9 +132,10 @@ function App() {
     }
   }
 
+  /** Saves the message written in the note composer. */
   const handleSendMessage = async () => {
     if (!inputValue.trim()) {
-      return console.log('Cannot send an empty message.')
+      return;
     }
 
     const loggedInToken = localStorage.getItem(LOGGED_IN)
@@ -143,20 +152,20 @@ function App() {
       setSentAt(Date.now())
       setShowInput(false)
     } catch (error) {
-      console.error('Failed to send message:', error)
+      return;
     }
   }
 
+  /** Checks the initial sticky code and initializes the note on mount. */
   useEffect(() => {
     const loadingStartedAt = Date.now()
     const token = getStickyCode()
-    console.log('Retrieved sticky code:', token)
 
+    /** Validates the stored code before displaying the sticky note. */
     const initializeStickyNote = async () => {
       if (token) {
-        console.log('Checking if sticky code exists in database:', token)
+
         const [exists] = await stickyCodeExists(token)
-        console.log(`Sticky code ${token} exists:`, exists)
 
         if (!exists) {
           setLoggedIn(false)
@@ -245,7 +254,7 @@ function App() {
                 className="logout-btn"
                 onClick={handleLogout}
               >
-                Log out
+                Close Sticky Note
               </button>
             </>
           ) : (

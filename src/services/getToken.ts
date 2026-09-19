@@ -1,6 +1,7 @@
 
 export const STICKY_CODE_KEY = 'sticky_code'
 
+/** Generates a readable sticky code from a city, country code, and number. */
 export function generateCityToken(): string {
   const CITY_CODES = [
     { city: 'Tokyo', code: 'JP' },
@@ -30,6 +31,7 @@ export function generateCityToken(): string {
   return `${cityEntry.city}${cityEntry.code}${number}`
 }
 
+/** Gets the sticky code from the URL or local storage and persists it. */
 export function getStickyCode(): string {
   if (typeof window === 'undefined') {
     return 'unknown-phone'

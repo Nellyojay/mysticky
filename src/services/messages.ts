@@ -6,6 +6,7 @@ export const STICKY_NOTE_TABLE_NAME = 'sticky_note'
 export const STICKY_NOTE_MESSAGE_TABLE = 'sticky_message'
 export const LOGGED_IN = 'logged_in_sticky_note'
 
+/** Checks whether a sticky code exists and returns its note record. */
 export async function stickyCodeExists(stickyCode: string): Promise<[boolean, { id: string } | null]> {
   const code = (stickyCode || getStickyCode()).trim()
 
@@ -23,11 +24,11 @@ export async function stickyCodeExists(stickyCode: string): Promise<[boolean, { 
     console.log('Failed to check sticky code existence', error)
     throw error
   }
-  console.log('Sticky code existence check result:', data)
 
   return [Array.isArray(data) && data.length > 0, data?.[0] || null]
 }
 
+/** Retrieves the newest message saved for a sticky note. */
 export async function getLatestMessage(stickyNoteId: string) {
   const noteId = stickyNoteId
 
@@ -51,6 +52,7 @@ export async function getLatestMessage(stickyNoteId: string) {
   return data as StickerMessage | null
 }
 
+/** Saves a message against a sticky note ID. */
 export async function saveMessage(message: string, stickyNoteId: string) {
 
   if (!message || !stickyNoteId) {
@@ -67,13 +69,13 @@ export async function saveMessage(message: string, stickyNoteId: string) {
     .single()
 
   if (error) {
-    console.log('Failed to save message:', error)
     throw error
   }
 
   return data as StickerMessage
 }
 
+/** Resolves a sticky code to its database note ID. */
 export async function resolveStickyNoteId(stickyCode: string): Promise<string | null> {
   if (!stickyCode) {
     return null
@@ -93,6 +95,7 @@ export async function resolveStickyNoteId(stickyCode: string): Promise<string | 
   return data?.id || null
 }
 
+/** Creates a sticky note and stores the active note session locally. */
 export async function createStickyNote(stickyCode: string) {
   const { data, error } = await supabase
     .from(STICKY_NOTE_TABLE_NAME)
@@ -101,7 +104,6 @@ export async function createStickyNote(stickyCode: string) {
     .single()
 
   if (error) {
-    console.log('Failed to create sticky note:', error)
     return false;
   }
 
