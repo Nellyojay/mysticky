@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { generateCityToken, getChatRoom, PHONE_TOKEN_KEY } from './services/getToken'
-import { chatRoomExists, createChatRoom, getLatestMessage, LOGGED_IN, resolveChatRoomId, saveMessage } from './services/messages'
+import { generateCityToken, getStickyCode, STICKY_CODE_KEY } from './services/getToken'
+import { createStickyCode, getLatestMessage, LOGGED_IN, resolveStickyNoteId, saveMessage, stickyCodeExists } from './services/messages'
 import Loader from './pages/components/loader'
 import './styles/sticker-card.css'
 
@@ -22,9 +22,9 @@ function App() {
   const [countdown, setCountdown] = useState('')
   const [response, setResponse] = useState<'yes' | 'no' | null>(null)
   const [showInput, setShowInput] = useState(false)
-  const [chatRoom, setChatRoom] = useState('')
-  const [chatRoomInput, setChatRoomInput] = useState(() => getChatRoom())
-  const [roomError, setRoomError] = useState('')
+  const [stickyCode, setStickyCode] = useState('')
+  const [stickyCodeInput, setStickyCodeInput] = useState(() => getStickyCode())
+  const [stickyCodeError, setStickyCodeError] = useState('')
   const [loggedIn, setLoggedIn] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -36,61 +36,61 @@ function App() {
   useEffect(() => {
     const loggedInToken = localStorage.getItem(LOGGED_IN)
     if (loggedInToken) {
-      const chatRoomId = loggedInToken.split('_')[0]
-      getLatestMessage(chatRoomId).then((message) => {
+      const stickyNoteId = loggedInToken.split('_')[0]
+      getLatestMessage(stickyNoteId).then((message) => {
         if (message) {
           setSavedMessage(message.message)
         }
       })
     }
-  }, [chatRoom])
+  }, [stickyCode])
 
-  const createChatRoomName = () => {
-    const newChatRoom = generateCityToken()
-    setChatRoom(newChatRoom)
-    setChatRoomInput(newChatRoom)
+  const createStickyCodeName = () => {
+    const newStickyCode = generateCityToken()
+    setStickyCode(newStickyCode)
+    setStickyCodeInput(newStickyCode)
   }
 
   const handleLogout = () => {
     localStorage.clear()
     setLoggedIn(false)
-    setChatRoom('')
-    setChatRoomInput('')
+    setStickyCode('')
+    setStickyCodeInput('')
     setSavedMessage(null)
     setInputValue('')
     setResponse(null)
   }
 
-  const handleCreationAndJoin = async () => {
-    const chatRoom = chatRoomInput
-    if (!chatRoom) {
-      setRoomError('Please enter a chat room code.')
+  const handleOpenStickyNote = async () => {
+    const stickyCode = stickyCodeInput
+    if (!stickyCode.trim()) {
+      setStickyCodeError('Please enter a sticky code.')
       return
     }
     setLoading(true)
-    const exists = await chatRoomExists(chatRoom)
+    const exists = await stickyCodeExists(stickyCode)
 
     if (exists) {
       setLoggedIn(exists)
-      setChatRoom(chatRoom)
+      setStickyCode(stickyCode)
 
-      const chatRoomId = await resolveChatRoomId(chatRoom)
-      localStorage.setItem(LOGGED_IN, `${chatRoomId}_${chatRoom}`)
-      localStorage.setItem(PHONE_TOKEN_KEY, chatRoom)
+      const stickyNoteId = await resolveStickyNoteId(stickyCode)
+      localStorage.setItem(LOGGED_IN, `${stickyNoteId}_${stickyCode}`)
+      localStorage.setItem(STICKY_CODE_KEY, stickyCode)
       window.location.reload()
       setLoading(false)
-      setRoomError('')
+      setStickyCodeError('')
       return;
     } else {
       try {
-        await createChatRoom(chatRoom)
+        await createStickyCode(stickyCode)
         setLoggedIn(true)
-        setChatRoom(chatRoom)
-        localStorage.setItem(PHONE_TOKEN_KEY, chatRoom)
-        setRoomError('')
+        setStickyCode(stickyCode)
+        localStorage.setItem(STICKY_CODE_KEY, stickyCode)
+        setStickyCodeError('')
         setLoading(false)
       } catch (error) {
-        setRoomError('Failed to create chat room. Please try again.')
+        setStickyCodeError('Failed to create sticky note. Please try again.')
         setLoading(false)
       }
     }
@@ -103,13 +103,13 @@ function App() {
 
     const loggedInToken = localStorage.getItem(LOGGED_IN)
     if (!loggedInToken) {
-      setRoomError('You must be logged in to send a message.')
+      setStickyCodeError('You must be logged in to send a message.')
       return
     }
 
-    const chatRoomId = loggedInToken.split('_')[0]
+    const stickyNoteId = loggedInToken.split('_')[0]
     try {
-      await saveMessage(inputValue, chatRoomId)
+      await saveMessage(inputValue, stickyNoteId)
       setSavedMessage(inputValue)
       setInputValue('')
       setSentAt(Date.now())
@@ -120,10 +120,10 @@ function App() {
   }
 
   useEffect(() => {
-    const token = getChatRoom()
-    setChatRoom(token)
+    const token = getStickyCode()
+    setStickyCode(token)
     setResponse(null)
-    setChatRoomInput(token)
+    setStickyCodeInput(token)
     setLoggedIn(Boolean(localStorage.getItem(LOGGED_IN)))
     setLoading(false)
   }, [])
@@ -139,7 +139,7 @@ function App() {
     >
       <div className={`sticker-card ${response ? 'sticker-card--celebrate' : ''}`}>
         <div className="paper-tape" />
-        <div className="sticker-tag">{chatRoom || 'chat room'}</div>
+        <div className="sticker-tag">{stickyCode || 'sticky note'}</div>
 
         {response === 'yes' ? (
           <div className="status-panel status-panel--yes">
@@ -201,34 +201,34 @@ function App() {
           ) : (
             <div className="note-box">
               <div className="room-badge">
-                Chat room: <strong>{chatRoom || 'Not selected'}</strong>
+                Sticky code: <strong>{stickyCode || 'Not selected'}</strong>
               </div>
 
               <div className="join-panel">
-                <label className="field-label">Chat room</label>
+                <label className="field-label">Sticky code</label>
                 <input
-                  value={chatRoomInput}
-                  onChange={(event) => setChatRoomInput(event.target.value)}
-                  placeholder="Type a chat room code"
-                  className={`room-input ${roomError ? 'border-red-500' : ''}`}
+                  value={stickyCodeInput}
+                  onChange={(event) => setStickyCodeInput(event.target.value)}
+                  placeholder="Type a sticky code"
+                  className={`room-input ${stickyCodeError ? 'border-red-500' : ''}`}
                 />
 
-                {roomError && <p className="error-text">{roomError}</p>}
+                {stickyCodeError && <p className="error-text">{stickyCodeError}</p>}
 
                 <div className="button-grid">
                   <button
                     type="button"
                     className="primary-btn"
-                    onClick={handleCreationAndJoin}
+                    onClick={handleOpenStickyNote}
                   >
-                    Join chat room
+                    Open sticky note
                   </button>
                   <button
                     type="button"
                     className="secondary-btn"
-                    onClick={createChatRoomName}
+                    onClick={createStickyCodeName}
                   >
-                    Create New chat room
+                    Create New sticky note
                   </button>
                 </div>
               </div>

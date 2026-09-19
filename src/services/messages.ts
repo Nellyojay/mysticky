@@ -1,44 +1,44 @@
 import { supabase } from '../lib/supabase'
 import type { StickerMessage } from '../types/supabase'
-import { getChatRoom } from './getToken'
+import { getStickyCode } from './getToken'
 
-export const CHATROOM_TABLE_NAME = 'chatroom'
-export const CHATROOM_MESSAGE_TABLE = 'anonymous'
-export const LOGGED_IN = 'logged_in_chat_room'
+export const STICKY_NOTE_TABLE_NAME = 'sticky_note'
+export const STICKY_NOTE_MESSAGE_TABLE = 'sticky_message'
+export const LOGGED_IN = 'logged_in_sticky_note'
 
-export async function chatRoomExists(chat_room: string): Promise<boolean> {
-  const chatRoom = (chat_room || getChatRoom()).trim()
+export async function stickyCodeExists(stickyCode: string): Promise<boolean> {
+  const code = (stickyCode || getStickyCode()).trim()
 
-  if (!chatRoom) {
+  if (!code) {
     return false
   }
 
   const { data, error } = await supabase
-    .from(CHATROOM_TABLE_NAME)
+    .from(STICKY_NOTE_TABLE_NAME)
     .select('id')
-    .eq('chat_room', chatRoom)
+    .eq('sticky_code', code)
     .limit(1)
 
   if (error && error.code !== 'PGRST116') {
-    console.log('Failed to check room existence', error)
+    console.log('Failed to check sticky code existence', error)
     throw error
   }
-  console.log('Room existence check result:', data)
+  console.log('Sticky code existence check result:', data)
 
   return Array.isArray(data) && data.length > 0
 }
 
-export async function getLatestMessage(chatRoomId: string) {
-  const chatRoom = chatRoomId
+export async function getLatestMessage(stickyNoteId: string) {
+  const noteId = stickyNoteId
 
-  if (!chatRoom) {
+  if (!noteId) {
     return null
   }
 
   const { data, error } = await supabase
-    .from(CHATROOM_MESSAGE_TABLE)
-    .select('message, time_past, chat_roomId')
-    .eq('chat_roomId', chatRoom)
+    .from(STICKY_NOTE_MESSAGE_TABLE)
+    .select('message, time_past, sticky_noteId')
+    .eq('sticky_noteId', noteId)
     .order('time_past', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -51,17 +51,17 @@ export async function getLatestMessage(chatRoomId: string) {
   return data as StickerMessage | null
 }
 
-export async function saveMessage(message: string, chatRoomId: string) {
+export async function saveMessage(message: string, stickyNoteId: string) {
 
-  if (!message || !chatRoomId) {
-    throw new Error('No active chat room found.')
+  if (!message || !stickyNoteId) {
+    throw new Error('No active sticky note found.')
   }
 
   const { data, error } = await supabase
-    .from(CHATROOM_MESSAGE_TABLE)
+    .from(STICKY_NOTE_MESSAGE_TABLE)
     .insert({
       message,
-      chat_roomId: chatRoomId,
+      sticky_noteId: stickyNoteId,
     })
     .select('*')
     .single()
@@ -74,38 +74,38 @@ export async function saveMessage(message: string, chatRoomId: string) {
   return data as StickerMessage
 }
 
-export async function resolveChatRoomId(chatRoom: string): Promise<string | null> {
-  if (!chatRoom) {
+export async function resolveStickyNoteId(stickyCode: string): Promise<string | null> {
+  if (!stickyCode) {
     return null
   }
 
   const { data, error } = await supabase
-    .from(CHATROOM_TABLE_NAME)
+    .from(STICKY_NOTE_TABLE_NAME)
     .select('id')
-    .eq('chat_room', chatRoom)
+    .eq('sticky_code', stickyCode)
     .single()
 
   if (error) {
-    console.error('Failed to resolve chat room ID:', error)
+    console.error('Failed to resolve sticky note ID:', error)
     return null
   }
 
   return data?.id || null
 }
 
-export async function createChatRoom(chat_room: string) {
+export async function createStickyCode(stickyCode: string) {
   const { data, error } = await supabase
-    .from(CHATROOM_TABLE_NAME)
-    .insert({ chat_room })
+    .from(STICKY_NOTE_TABLE_NAME)
+    .insert({ sticky_code: stickyCode })
     .select('id')
     .single()
 
   if (error) {
-    console.log('Failed to create chat room:', error)
+    console.log('Failed to create sticky note:', error)
     return false;
   }
 
-  localStorage.setItem(LOGGED_IN, `${data.id}_${chat_room}`);
+  localStorage.setItem(LOGGED_IN, `${data.id}_${stickyCode}`);
 
   return Boolean(data);
 }

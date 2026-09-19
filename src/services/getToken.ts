@@ -1,5 +1,5 @@
 
-export const PHONE_TOKEN_KEY = 'chat_room_name'
+export const STICKY_CODE_KEY = 'sticky_code'
 
 export function generateCityToken(): string {
   const CITY_CODES = [
@@ -30,21 +30,21 @@ export function generateCityToken(): string {
   return `${cityEntry.city}${cityEntry.code}${number}`
 }
 
-export function getChatRoom(): string {
+export function getStickyCode(): string {
   if (typeof window === 'undefined') {
     return 'unknown-phone'
   }
 
   const params = new URLSearchParams(window.location.search)
   const tokenFromQuery =
-    params.get('chatroom') ??
-    params.get('receiverToken') ??
-    localStorage.getItem(PHONE_TOKEN_KEY)
+    params.get('stickyCode') ??
+    params.get('sticky_code') ??
+    localStorage.getItem(STICKY_CODE_KEY)
 
   const token = tokenFromQuery ?? ''
 
   if (tokenFromQuery) {
-    localStorage.setItem(PHONE_TOKEN_KEY, token)
+    localStorage.setItem(STICKY_CODE_KEY, token)
   }
 
   return token
