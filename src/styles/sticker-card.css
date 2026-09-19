@@ -217,15 +217,17 @@ textarea {
   border-radius: 14px;
   padding: 12px 14px;
   font: inherit;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.35);
   color: #3c2b31;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   outline: none;
 }
 
 .room-input:focus,
 textarea:focus {
   border-color: rgba(91, 44, 131, 0.5);
-  background: fixed rgba(255, 255, 255);
+  background: rgba(255, 255, 255, 0.555);
   box-shadow: 0 0 0 3px rgba(158, 197, 254, 0.35);
 }
 
@@ -336,12 +338,14 @@ textarea {
 .send-btn {
   width: 100%;
   margin-top: 8px;
-  background: rgba(104, 94, 3, 0.55);
-  color: white;
+  background: rgba(255, 255, 255, 0.35);
+  color: #3c2b31;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .composer-box:has(textarea:focus) .send-btn {
-  background: rgba(104, 94, 3);
+  background: rgba(255, 255, 255, 0.575);
 }
 
 .small-note {
